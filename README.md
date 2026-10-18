@@ -1,18 +1,129 @@
-The idea of this algorithm is to find the physical trajectory by minimizing the action between two fixed points, applying iteratively a local approximation to update the internal points of a discretized path.
+# Action Minimization Trajectory Simulation
 
-Defining the lagrangian of the system as $L=T-V$, where $T$ is the kinetic energy and $V$ is the potential energy, the true trajectory can be find by minimizing a quantity called the action, defined as $S=\int_{t_0}^{t_1}dt L(x,\dot{x}).$ Applying the condition $\delta S=0$ the Euler-Lagrange equation can be derived.
+The goal of this algorithm is to find the physical trajectory of a system by minimizing the action between two fixed points, applying a local approximation iteratively to update the internal points of a discretized path.
 
-## Harmonic oscillator
-The harmonic oscillator is the simplest system that can be studied using this formalism. Its lagrangian is given by the following equation: $L(x,\dot{x})=\frac{1}{2}m \dot{x}^{2} - \frac{1}{2}k x^{2},$ where $m$ is the mass of the body and $k$ is the elastic costant of the system.
+## Theoretical Framework
 
-Applying the Principle of least action gives: $\delta S = 0 \iff \delta \frac{1}{2}\left[\int_{t_0}^{t_1}dt (m\dot{x}^{2} - kx^{2})\right] = 0.$
+Defining the Lagrangian of the system as:
 
-To resolve this problem using a numerical algorithm, first we fix the spatial extremes of the interval, $x_A$ and $x_B$, and then we fix the initial time $t_0$ and the final time $t_f$. After fixing the total number of grid points $N$, we define a costant time step as $\Delta t = \frac{t_f - t_0}{N-1}$. 
+$$
+L = T - V
+$$
 
-For any generic segment between a known point $x_A$ and an unknown adjacent point $x_M$, we must discretize both velocity and position. The velocity is approximated as the finite difference $v=(x_M-x_A)/\Delta t$, while the spatial coordinate for the potential energy is approximated as the midpoint $\bar{x}=(x_A+x_M)/2$.
-Substituting these into the lagrangian yields the discrete lagrangian for a single segment: $L_{discrete}=\frac{1}{2}m\left(\frac{x_M-x_A}{\Delta t}\right)^2 - \frac{1}{2}k\left(\frac{x_A+x_M}{2}\right)^2$.
+where $T$ is the kinetic energy and $V$ is the potential energy, the physical trajectory is found by minimizing the action $S$:
 
-Considering the two adjacent segments (from $x_A$ to $x_M$, and from $x_M$ to $x_B$), the action, which is an integral in the continuum, can be approximated as the sum of two rectangles with base $\Delta t$ and height given by the value of the lagrangian in each interval: $S_{discrete}=\Delta t (L_1 + L_2).$ By plugging in our descrete approximations, we can express the action of this sub-system purely as a function of $x_M$. We then apply the Principle of least action by taking the derivative with respect to the unknown coordinate $x_M$ and setting it equal to zero: $\frac{\partial S_{discrete}}{\partial x_M}=0.$
+$$
+S = \int_{t_0}^{t_1} L(x, \dot{x}) \, dt
+$$
 
-This yields an explicit formula to calculate the optimal position for any point given its two neighbors. By applying this update rule iteratively and simultaneously to all internal points of the grid (relaxation method), the system evolves toward the physical trajectory. The algorithm stops when the variation of the total action between successive iterations falls below a chosen tollerance ($\varepsilon$).
+Applying the Principle of Least Action ($\delta S = 0$) yields the classical Euler-Lagrange equations of motion.
 
+## The Harmonic Oscillator
+
+The simple harmonic oscillator is described by the Lagrangian:
+
+$$
+L(x, \dot{x}) = \frac{1}{2}m \dot{x}^{2} - \frac{1}{2}k x^{2}
+$$
+
+where $m$ is the mass and $k$ is the elastic constant. The stationary action condition is written as:
+
+$$
+\delta \int_{t_0}^{t_1} \left( \frac{1}{2}m\dot{x}^{2} - \frac{1}{2}kx^{2} \right) dt = 0
+$$
+
+## Discretization Scheme
+
+To solve this problem numerically, we fix the boundary spatial coordinates $x(t_0) = x_0$ and $x(t_f) = x_f$. Given $N$ total grid points, the constant time step is:
+
+$$
+\Delta t = \frac{t_f - t_0}{N - 1}
+$$
+
+For any interval between two adjacent points $x_A$ and $x_M$, velocity is approximated via finite differences and position via the midpoint coordinate:
+
+$$
+v = \frac{x_M - x_A}{\Delta t}
+$$
+
+$$
+\bar{x} = \frac{x_A + x_M}{2}
+$$
+
+Substituting these approximations into the Lagrangian yields the discrete Lagrangian for a single segment:
+
+$$
+L_{\text{discrete}} = \frac{1}{2}m \left( \frac{x_M - x_A}{\Delta t} \right)^2 - \frac{1}{2}k \left( \frac{x_A + x_M}{2} \right)^2
+$$
+
+## Step-by-Step Derivation of the Update Rule
+
+Consider two adjacent segments spanning three consecutive points: $x_A$ (left neighbor), $x_M$ (unknown middle point), and $x_B$ (right neighbor). The local discrete action $S_{\text{loc}}$ over these two sub-intervals is:
+
+$$
+S_{\text{loc}}(x_M) = \Delta t \left( L_1 + L_2 \right)
+$$
+
+Substituting the discrete kinematics gives:
+
+$$
+S_{\text{loc}}(x_M) = \Delta t \left[ \frac{1}{2}m \left( \frac{x_M - x_A}{\Delta t} \right)^2 - \frac{1}{2}k \left( \frac{x_A + x_M}{2} \right)^2 + \frac{1}{2}m \left( \frac{x_B - x_M}{\Delta t} \right)^2 - \frac{1}{2}k \left( \frac{x_M + x_B}{2} \right)^2 \right]
+$$
+
+To minimize $S_{\text{loc}}$ with respect to $x_M$, we set its partial derivative to zero:
+
+$$
+\frac{\partial S_{\text{loc}}}{\partial x_M} = 0
+$$
+
+Differentiating term by term:
+
+$$
+\Delta t \left[ \frac{m}{\Delta t^2}(x_M - x_A) - \frac{k}{4}(x_A + x_M) - \frac{m}{\Delta t^2}(x_B - x_M) - \frac{k}{4}(x_M + x_B) \right] = 0
+$$
+
+Simplifying by removing $\Delta t$ and regrouping terms:
+
+$$
+\frac{m}{\Delta t} (2x_M - x_A - x_B) - \frac{k \Delta t}{4} (2x_M + x_A + x_B) = 0
+$$
+
+Isolating $x_M$ on the left side:
+
+$$
+2x_M \left( \frac{m}{\Delta t} - \frac{k \Delta t}{4} \right) = (x_A + x_B) \left( \frac{m}{\Delta t} + \frac{k \Delta t}{4} \right)
+$$
+
+$$
+2x_M \left( \frac{4m - k\Delta t^2}{4\Delta t} \right) = (x_A + x_B) \left( \frac{4m + k\Delta t^2}{4\Delta t} \right)
+$$
+
+Multiplying both sides by $\frac{2\Delta t}{4m - k\Delta t^2}$ yields the explicit update formula for $x_M$:
+
+$$
+x_M = \frac{x_A + x_B}{2} \left( \frac{4m + k\Delta t^2}{4m - k\Delta t^2} \right)
+$$
+
+## Stability Limit (Jacobi Conjugate Point Constraint)
+
+According to Jacobi's theorem, the action path represents a strict minimum only if the total simulation time $t_f - t_0$ does not exceed half of the natural oscillation period $T$:
+
+$$
+t_f - t_0 < \frac{T}{2} = \pi \sqrt{\frac{m}{k}}
+$$
+
+Beyond this time threshold, the path becomes a saddle point, causing the relaxation solver to diverge.
+
+## Relaxation Algorithm
+
+1. Initialize an array $X$ of length $N$ with fixed boundary conditions $X[0] = x_0$ and $X[N-1] = x_f$, using linear interpolation for internal points.
+
+2. Simultaneously update all internal points $X[1:-1]$ using NumPy slicing and the derived update rule.
+
+3. Compute the total action $S$ of the entire discretized path.
+
+4. Repeat iteratively until the absolute change in total action between successive iterations falls below the threshold $\varepsilon$:
+
+$$
+\vert{}S_{\text{new}} - S_{\text{old}}\vert{} < \varepsilon
+$$
