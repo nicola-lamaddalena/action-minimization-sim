@@ -78,6 +78,27 @@ class Simulation(QMainWindow):
         self.timer.timeout.connect(self.step_and_draw)
         self.timer.start(16) 
 
+        self.text_info = pg.TextItem(anchor=(1, 0))
+        self.text_info.setParentItem(self.graphWidget.getViewBox())
+        self.graphWidget.getViewBox().sigResized.connect(self.reposition_info_text)
+        self.reposition_info_text()
+
+        self.update_info_text(is_converged=False)
+
+    def reposition_info_text(self):
+        width = self.graphWidget.getViewBox().rect().width()
+        self.text_info.setPos(width - 15, 15)
+
+    def update_info_text(self, is_converged=False):
+        diff_color = "#00ff00" if is_converged else "#ffffff"
+        html_code = (
+            f'<div style="font-family: monospace; font-size: 11pt; color: #ffffff;">'
+            f'Action : {self.S_old:.6f}<br>'
+            f'Diff   : <span style="color: {diff_color};">{self.diff:.2e}</span>'
+            f'</div>'
+        )
+        self.text_info.setHtml(html_code)
+
     def step_and_draw(self):
         
         if self.diff > self.eps:
@@ -91,9 +112,11 @@ class Simulation(QMainWindow):
                     break
 
             self.linea_plot.setData(self.time_array, self.points)
+            self.update_info_text(is_converged=False)
             
         else:
             self.timer.stop()
+            self.update_info_text(is_converged=True)
             print("Convergenza raggiunta!")
 
 
