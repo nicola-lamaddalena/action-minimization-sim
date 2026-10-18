@@ -38,7 +38,8 @@ class Simulation(QMainWindow):
 
         self.graphWidget = pg.PlotWidget()
         self.setCentralWidget(self.graphWidget)
-        self.graphWidget.setTitle("Evoluzione della Traiettoria")
+        self.graphWidget.setTitle("Trajectory evolution")
+        self.graphWidget.addLegend()
         
 
         self.points_initial = np.linspace(self.x0, self.xf, self.N)
@@ -73,8 +74,6 @@ class Simulation(QMainWindow):
             name="Numeric Simulation"
         )
 
-        self.linea_plot = self.graphWidget.plot(self.time_array, self.points, symbol='o')
-
         self.timer = QTimer()
         self.timer.timeout.connect(self.step_and_draw)
         self.timer.start(16) 
@@ -99,6 +98,6 @@ class Simulation(QMainWindow):
 
 
 app = QApplication(sys.argv)
-finestra = Simulation()
-finestra.show()
+window = Simulation()
+window.show()
 sys.exit(app.exec())
