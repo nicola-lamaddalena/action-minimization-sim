@@ -40,6 +40,8 @@ class Simulation(QMainWindow):
         self.setCentralWidget(self.graphWidget)
         self.graphWidget.setTitle("Trajectory evolution")
         self.graphWidget.addLegend()
+        self.graphWidget.setLabel('bottom', "Time", units='s')
+        self.graphWidget.setLabel('left', "Position", units='m')
         
 
         self.points_initial = np.linspace(self.x0, self.xf, self.N)
