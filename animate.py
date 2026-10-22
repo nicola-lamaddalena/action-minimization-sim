@@ -1,10 +1,11 @@
 import sys
 import numpy as np
+import numpy.typing as npt
 from PyQt6.QtWidgets import QApplication, QMainWindow
 from PyQt6.QtCore import Qt, QTimer
 import pyqtgraph as pg
 
-def total_action(points: list[float], dt: float, m: float, k: float) -> float:
+def total_action(points: npt.NDArray[np.float64], dt: float, m: float, k: float) -> float:
     x_left, x_right = points[:-1], points[1:]
     v = (x_right - x_left) / dt
     x_mean = 0.5 * (x_left + x_right)
@@ -12,7 +13,7 @@ def total_action(points: list[float], dt: float, m: float, k: float) -> float:
 
     return dt * np.sum(lag)
 
-def minimum(m: float, k: float, dt: float, xa: float, xb: float) -> float:
+def minimum(m: float, k: float, dt: float, xa: npt.NDArray[np.float64], xb: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     return 0.5 * (xa + xb) * ((4*m + k*dt**2) / (4*m - k*dt**2))
 # ...
 
